@@ -8,6 +8,7 @@
   --muted: #6b7280;
   --line: #e3e5ea;
   --accent: #2563eb;
+  --title: #1d4ed8; /* 흰 배경 대비 6.7:1 */
   --warn-bg: #fff8e6;
   --warn-text: #8a6100;
 }
@@ -21,6 +22,7 @@
     --muted: #9aa1ad;
     --line: #2b2f37;
     --accent: #6aa1ff;
+    --title: #7cb0ff; /* 어두운 배경 대비 8.2:1 */
     --warn-bg: #2a2413;
     --warn-text: #e0c274;
   }
@@ -57,10 +59,10 @@ body {
 
 .topbar h1 {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--muted);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--title);
 }
 
 .today-btn {
@@ -205,7 +207,7 @@ main {
 @media (min-width: 640px) {
   body { max-width: 34rem; margin: 0 auto; }
   main { padding: 2rem 1.5rem; }
-  .topbar h1 { font-size: 1.14rem; }
+  .topbar h1 { font-size: 1.6rem; }
   .today-btn { font-size: 0.9rem; }
   .date-label { font-size: 1.26rem; }
 }
