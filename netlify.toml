@@ -2,6 +2,20 @@
 [build]
   publish = "."
 
+# publish = "." 이므로 저장소의 모든 파일이 서빙된다.
+# 사이트 구성요소가 아닌 개발용 파일은 공개하지 않는다.
+[[redirects]]
+  from = "/scripts/*"
+  to = "/404-not-found"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404-not-found"
+  status = 404
+  force = true
+
 # 식단 데이터는 주 1회 갱신되므로 짧게 캐시한다.
 [[headers]]
   for = "/data/*"
