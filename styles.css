@@ -1,4 +1,4 @@
-/* 연수원 식단 — 모바일 우선, 빌드 없음 */
+/* 서울교육연수원 주간 식단 — 모바일 우선, 빌드 없음 */
 
 :root {
   --bg: #ffffff;
@@ -59,13 +59,16 @@ body {
 
 .topbar h1 {
   margin: 0;
-  font-size: 1.35rem;
+  /* 제목이 길어 좁은 화면에서는 폭에 맞춰 줄어든다. 320px 에서도 한 줄에 들어간다. */
+  font-size: clamp(1.15rem, 5.6vw, 1.35rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--title);
+  white-space: nowrap;
 }
 
 .today-btn {
+  flex: 0 0 auto;
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--text);
