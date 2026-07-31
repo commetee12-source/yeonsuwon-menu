@@ -200,7 +200,12 @@ main {
 .footer .src { opacity: 0.75; }
 
 /* ── 넓은 화면 ───────────────────────────────────────── */
+/* 모바일 기준 크기는 손대지 않는다. PC에서만 헤더·날짜를 20% 키운다 —
+   같은 rem 값이라도 넓은 화면에서는 작아 보이기 때문. */
 @media (min-width: 640px) {
   body { max-width: 34rem; margin: 0 auto; }
   main { padding: 2rem 1.5rem; }
+  .topbar h1 { font-size: 1.14rem; }
+  .today-btn { font-size: 0.9rem; }
+  .date-label { font-size: 1.26rem; }
 }
