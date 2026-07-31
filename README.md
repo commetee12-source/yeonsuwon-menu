@@ -5,22 +5,63 @@
 
 ## 매주 갱신하는 법
 
-1. 새 「주간업무」 PDF를 볼트(`D:\obsi\menu\`)에 저장한다.
-2. Claude Code에 이렇게 말한다: **"이번 주 식단 JSON 만들어줘"**
-   - PDF 2쪽 `<행정지원과>` 의 "2. 주간식단(과정별 급식인원 및 식단)" 표를 읽어
-     `data/2026-W33.json` 형태로 새 주차 파일을 만들고
-     `data/index.json` 의 `weeks` · `latest` · `coverage` · `days` · `updatedAt` 을 갱신한다.
-3. 검증한다.
+**새 「주간업무」 PDF를 볼트(`D:\obsi\menu\`)에 저장하면 끝이다.** 나머지는 자동이다.
 
-   ```bash
-   node scripts/check-data.mjs
-   ```
+```
+PDF 저장  →  파싱  →  검증  →  커밋·푸시  →  Netlify 재배포
+                              (실패하면 여기서 멈춘다)
+```
 
-4. 커밋 & 푸시하면 Netlify가 자동 배포한다 (약 30초).
+감시 스크립트를 띄워두면 저장하는 즉시 돌아간다.
 
-   ```bash
-   git add data/ && git commit -m "data: 2026-W33 식단" && git push
-   ```
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\watch.ps1
+```
+
+직접 돌리고 싶을 때:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
+powershell -ExecutionPolicy Bypass -File scripts\publish.ps1 -DryRun   # 커밋·푸시 없이 확인만
+```
+
+여러 번 돌려도 안전하다. 바뀐 게 없으면 아무 일도 하지 않는다.
+
+### 실패하면
+
+파이프라인은 **의심스러우면 멈춘다.** 잘못된 식단을 배포하는 것보다 배포하지 않는 편이 낫기 때문이다.
+아래 중 하나라도 걸리면 커밋·푸시를 하지 않고, 어느 날짜의 무엇이 문제인지 알려준다.
+
+- 머리말의 기간 표기 `【YYYY. M. D. ∼ YYYY. M. D.】` 를 찾지 못함
+- 급식일 줄(`8.3(월)`)이 하나도 없음
+- 총 급식인원이 세부 인원의 합과 다름
+- 메뉴가 비어 있음 / 세부 인원 괄호가 닫히지 않음
+- 급식일이 머리말 기간 밖
+
+표 양식이 실제로 바뀐 것이라면 `scripts/import_pdf.py` 를 고치고 `scripts/test_import.py` 를 돌린다.
+급하면 `data/` 의 JSON을 직접 고쳐도 된다 — `check-data.mjs` 가 지켜 준다.
+
+### 필요한 것
+
+| | |
+|---|---|
+| Python + PyMuPDF | `python -m pip install pymupdf` (PDF 읽기) |
+| Node.js | 데이터 검증 (`check-data.mjs`, 내장 모듈만 사용) |
+| git | 푸시 권한이 설정되어 있어야 한다 |
+
+사이트 자체는 이것들과 무관하다. 배포되는 것은 HTML·CSS·JS·JSON 뿐이다.
+
+## 스크립트
+
+| 파일 | 하는 일 |
+|---|---|
+| `scripts/watch.ps1` | 볼트를 감시하다 PDF가 들어오면 `publish.ps1` 실행 |
+| `scripts/publish.ps1` | 파싱 → 검증 → 커밋 → 푸시 (어디서든 실패하면 중단) |
+| `scripts/import_pdf.py` | PDF의 주간식단 표를 `data/{주차}.json` 으로 변환, `index.json` 재생성 |
+| `scripts/check-data.mjs` | 데이터 검증 (총원=세부 합, ISO 주차 일치, index 양방향 대조) |
+| `scripts/test_import.py` | 파서 시험 (연말 넘김, 양식 이상 거부 등) |
+
+`scripts/` 는 `netlify.toml` 에서 404로 막아 두어 사이트로 서빙되지 않는다.
 
 ## 로컬에서 확인
 
