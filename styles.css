@@ -1,0 +1,206 @@
+/* 연수원 식단 — 모바일 우선, 빌드 없음 */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f5f6f8;
+  --text: #16181d;
+  --menu: #16181d;
+  --muted: #6b7280;
+  --line: #e3e5ea;
+  --accent: #2563eb;
+  --warn-bg: #fff8e6;
+  --warn-text: #8a6100;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --surface: #1c1f25;
+    --text: #eceef2;
+    --menu: #f5f7fa;
+    --muted: #9aa1ad;
+    --line: #2b2f37;
+    --accent: #6aa1ff;
+    --warn-bg: #2a2413;
+    --warn-text: #e0c274;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── 상단 바 ─────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem calc(0.7rem);
+  padding-top: max(0.7rem, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+}
+
+.today-btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.today-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── 날짜 바 ─────────────────────────────────────────── */
+.datebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.nav-btn {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav-btn:hover { background: var(--surface); }
+
+.date-field {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 0.6rem;
+}
+
+.date-field:hover { background: var(--surface); }
+
+.date-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+}
+
+/* 네이티브 날짜 선택기를 라벨 위에 투명하게 겹쳐 둔다 */
+.date-field input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* ── 본문 ────────────────────────────────────────────── */
+main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu li {
+  font-size: clamp(1.45rem, 6vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--menu);
+  word-break: keep-all;
+}
+
+.headcount {
+  margin: 1.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.state-msg {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.state-msg strong { color: var(--text); }
+
+.action-btn {
+  align-self: flex-start;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.55rem;
+  cursor: pointer;
+}
+
+.action-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── 하단 ────────────────────────────────────────────── */
+.footer {
+  padding: 0.9rem 1.25rem;
+  padding-bottom: max(0.9rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.footer p { margin: 0; }
+.footer .src { opacity: 0.75; }
+
+/* ── 넓은 화면 ───────────────────────────────────────── */
+@media (min-width: 640px) {
+  body { max-width: 34rem; margin: 0 auto; }
+  main { padding: 2rem 1.5rem; }
+}

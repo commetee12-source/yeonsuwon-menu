@@ -1,0 +1,25 @@
+# 빌드 없는 정적 사이트. 저장소 내용을 그대로 배포한다.
+[build]
+  publish = "."
+
+# 식단 데이터는 주 1회 갱신되므로 짧게 캐시한다.
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+# 앱 코드와 진입 문서는 항상 최신을 받도록 한다.
+[[headers]]
+  for = "/app.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/styles.css"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

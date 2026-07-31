@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="서울특별시교육청교육연수원 구내식당 식단 조회">
+<title>연수원 식단</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍚</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>연수원 식단</h1>
+  <button type="button" id="todayBtn" class="today-btn">오늘</button>
+</header>
+
+<nav class="datebar" aria-label="날짜 선택">
+  <button type="button" id="prevBtn" class="nav-btn" aria-label="하루 전">‹</button>
+
+  <div class="date-field">
+    <span id="dateLabel" class="date-label">—</span>
+    <input type="date" id="dateInput" aria-label="날짜 직접 선택">
+  </div>
+
+  <button type="button" id="nextBtn" class="nav-btn" aria-label="하루 뒤">›</button>
+</nav>
+
+<main id="main" aria-live="polite" aria-busy="true">
+  <p class="state-msg">불러오는 중…</p>
+</main>
+
+<footer class="footer">
+  <p>※ 기관 사정에 따라 변경될 수 있음</p>
+  <p class="src">서울특별시교육청교육연수원 주간업무보고 기준</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

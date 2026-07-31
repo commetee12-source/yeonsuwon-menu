@@ -1,0 +1,27 @@
+# 원본 업무 문서가 공개 배포 대상에 섞이는 것을 구조적으로 차단한다.
+# 주간업무보고에는 계약금액·담당자 실명·대관 일정 등 내부 정보가 포함된다.
+*.pdf
+*.hwp
+*.hwpx
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# 도구 세션 상태 (OMC / Obsidian) — 배포 대상 아님
+.omc/
+.obsidian/
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# 혹시 도구를 붙이더라도 산출물은 커밋하지 않는다
+node_modules/
+dist/
+.netlify/
