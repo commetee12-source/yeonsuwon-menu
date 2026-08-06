@@ -13,13 +13,21 @@
   var weekCache = Object.create(null);
   var current = null; // "YYYY-MM-DD"
 
+  // 급식인원 줄 앞에 붙는 사람 아이콘. styles.css 의 stroke 규칙을 그대로 탄다.
+  var PERSON_SVG =
+    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="12" cy="8" r="3.4"/>' +
+    '<path d="M4.8 20c0-3.6 3.2-5.6 7.2-5.6s7.2 2 7.2 5.6" stroke-linecap="round"/>' +
+    '</svg>';
+
   var el = {
     main: document.getElementById('main'),
     label: document.getElementById('dateLabel'),
     input: document.getElementById('dateInput'),
     prev: document.getElementById('prevBtn'),
     next: document.getElementById('nextBtn'),
-    today: document.getElementById('todayBtn')
+    today: document.getElementById('todayBtn'),
+    todayBadge: document.getElementById('todayBadge')
   };
 
   // ── 날짜 유틸 ──────────────────────────────────────────────
@@ -84,11 +92,22 @@
     while (el.main.firstChild) el.main.removeChild(el.main.firstChild);
   }
 
+  /** 안내 문구와 버튼도 식단 카드와 같은 판 위에 올린다. 없으면 만들어 재사용한다. */
+  function stateCard() {
+    var card = el.main.querySelector('.card-state');
+    if (!card) {
+      card = document.createElement('section');
+      card.className = 'card card-state';
+      el.main.appendChild(card);
+    }
+    return card;
+  }
+
   function message(html) {
     var p = document.createElement('p');
     p.className = 'state-msg';
     p.innerHTML = html;
-    el.main.appendChild(p);
+    stateCard().appendChild(p);
   }
 
   function actionButton(text, onClick) {
@@ -97,10 +116,18 @@
     b.className = 'action-btn';
     b.textContent = text;
     b.addEventListener('click', onClick);
-    el.main.appendChild(b);
+    stateCard().appendChild(b);
   }
 
   function renderMeal(day) {
+    var card = document.createElement('section');
+    card.className = 'card';
+
+    var label = document.createElement('span');
+    label.className = 'meal-label';
+    label.textContent = '중식';
+    card.appendChild(label);
+
     var ul = document.createElement('ul');
     ul.className = 'menu';
     day.menu.forEach(function (item) {
@@ -108,16 +135,21 @@
       li.textContent = item;
       ul.appendChild(li);
     });
-    el.main.appendChild(ul);
+    card.appendChild(ul);
 
     // 급식인원은 총원만 노출한다. breakdown(직원/초등/중등/교행)은 화면에 쓰지 않는다.
     var total = day.headcount && day.headcount.total;
     if (typeof total === 'number') {
       var p = document.createElement('p');
       p.className = 'headcount';
-      p.textContent = '급식인원 ' + total.toLocaleString('ko-KR') + '명';
-      el.main.appendChild(p);
+      p.innerHTML = PERSON_SVG; // 정적 아이콘 마크업
+      p.appendChild(
+        document.createTextNode('급식인원 ' + total.toLocaleString('ko-KR') + '명')
+      );
+      card.appendChild(p);
     }
+
+    el.main.appendChild(card);
   }
 
   function nearestMealDay(iso) {
@@ -193,6 +225,7 @@
   function syncChrome(iso) {
     el.label.textContent = formatKorean(iso);
     el.input.value = iso;
+    el.todayBadge.hidden = iso !== todayISO();
 
     var url = new URL(window.location.href);
     url.searchParams.set('date', iso);

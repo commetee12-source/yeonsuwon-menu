@@ -1,39 +1,41 @@
-/* 서울교육연수원 주간 식단 — 모바일 우선, 빌드 없음 */
+/* 서울교육연수원 주간 식단 — 모바일 우선, 빌드 없음
+ *
+ * 디자인: 따뜻한 크림/앰버 톤. Google Stitch 로 잡은 시안을 그대로 옮겼다.
+ * 웹폰트는 쓰지 않는다 — 첫 화면이 1초 안에 떠야 하는 앱이라 한글 웹폰트
+ * (수백 KB)를 기다리게 만들지 않고 시스템 한글 폰트를 그대로 쓴다.
+ */
 
 :root {
-  --bg: #ffffff;
-  --surface: #f5f6f8;
-  --text: #16181d;
-  --menu: #16181d;
-  --muted: #6b7280;
-  --line: #e3e5ea;
-  --accent: #2563eb;
-  --title: #1d4ed8; /* 흰 배경 대비 6.7:1 */
-  --warn-bg: #fff8e6;
-  --warn-text: #8a6100;
+  --bg: #fbf7f0;          /* 크림/오트밀 */
+  --card: #fffdf8;        /* 카드는 배경보다 한 톤 밝게 */
+  --text: #2c2016;        /* 딥 브라운 — 검정 대신 */
+  --text-2: #6b5847;      /* 부메뉴 줄 */
+  --muted: #7a6553;       /* 하단 안내문 (크림 위 5.2:1) */
+  --line: #e6dbca;
+  --accent: #d97706;      /* 앰버 — 점·아이콘 등 장식용 */
+  --accent-strong: #a35a04; /* 크림 위 4.9:1. 글자·채움에는 이쪽만 쓴다 */
+  --accent-soft: rgba(217, 119, 6, 0.11);
+  --shadow: 0 10px 30px rgba(44, 32, 22, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14161a;
-    --surface: #1c1f25;
-    --text: #eceef2;
-    --menu: #f5f7fa;
-    --muted: #9aa1ad;
-    --line: #2b2f37;
-    --accent: #6aa1ff;
-    --title: #7cb0ff; /* 어두운 배경 대비 8.2:1 */
-    --warn-bg: #2a2413;
-    --warn-text: #e0c274;
+    --bg: #1a1512;
+    --card: #241d18;
+    --text: #f2e9df;
+    --text-2: #cbbaa9;
+    --muted: #a6937f;
+    --line: #3a2f27;
+    --accent: #f0a63c;
+    --accent-strong: #f5b455; /* 어두운 카드 위 9.1:1 */
+    --accent-soft: rgba(240, 166, 60, 0.14);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   }
 }
 
 * { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
-  padding: 0;
-}
+html, body { margin: 0; padding: 0; }
 
 body {
   min-height: 100dvh;
@@ -46,65 +48,97 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 인라인 아이콘은 전부 선(stroke) 기반이다 */
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
 /* ── 상단 바 ─────────────────────────────────────────── */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  padding-top: max(0.85rem, env(safe-area-inset-top));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.7rem 1rem calc(0.7rem);
-  padding-top: max(0.7rem, env(safe-area-inset-top));
-  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.brand-ic {
+  flex: 0 0 auto;
+  width: 1.55rem;
+  height: 1.55rem;
+  color: var(--accent-strong);
 }
 
 .topbar h1 {
   margin: 0;
   /* 제목이 길어 좁은 화면에서는 폭에 맞춰 줄어든다. 320px 에서도 한 줄에 들어간다. */
-  font-size: clamp(1.15rem, 5.6vw, 1.35rem);
+  font-size: clamp(1.05rem, 5vw, 1.25rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--title);
+  color: var(--text);
   white-space: nowrap;
 }
 
 .today-btn {
   flex: 0 0 auto;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--text);
+  border: none;
+  background: var(--accent-strong);
+  color: var(--bg);
   font: inherit;
   font-size: 0.8rem;
-  padding: 0.3rem 0.7rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
   border-radius: 999px;
   cursor: pointer;
 }
 
-.today-btn:hover { border-color: var(--accent); color: var(--accent); }
+.today-btn:active { transform: scale(0.96); }
 
 /* ── 날짜 바 ─────────────────────────────────────────── */
 .datebar {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem 0;
+}
+
+.date-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.25rem;
-  padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid var(--line);
+  gap: 0.35rem;
+  width: 100%;
 }
 
 .nav-btn {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--text);
-  font-size: 1.6rem;
-  line-height: 1;
+  color: var(--text-2);
   cursor: pointer;
 }
 
-.nav-btn:hover { background: var(--surface); }
+.nav-btn svg { width: 1.35rem; height: 1.35rem; }
+.nav-btn:hover { background: var(--card); color: var(--text); }
+.nav-btn:active { transform: scale(0.94); }
 
 .date-field {
   position: relative;
@@ -112,15 +146,24 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.45rem;
   min-height: 2.75rem;
-  border-radius: 0.6rem;
+  border-radius: 0.9rem;
 }
 
-.date-field:hover { background: var(--surface); }
+.date-field:hover { background: var(--card); }
+
+.cal-ic {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--muted);
+  pointer-events: none;
+}
 
 .date-label {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
   pointer-events: none;
 }
@@ -137,41 +180,123 @@ body {
   font: inherit;
 }
 
+.today-badge {
+  margin: 0;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.today-badge[hidden] { display: none; }
+
 /* ── 본문 ────────────────────────────────────────────── */
 main {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 1.25rem 1.25rem 1rem;
+  padding: 1rem 1.15rem 1.25rem;
+}
+
+/* ── 식단 카드 ───────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border-radius: 1.75rem;
+  box-shadow: var(--shadow);
+  padding: 1.6rem 1.4rem 1.4rem;
+}
+
+.meal-label {
+  display: inline-block;
+  margin-bottom: 1.35rem;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .menu {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
 }
 
 .menu li {
-  font-size: clamp(1.45rem, 6vw, 2.4rem);
-  font-weight: 700;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: clamp(1.15rem, 4.8vw, 1.4rem);
+  font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.02em;
-  color: var(--menu);
+  color: var(--text-2);
   word-break: keep-all;
 }
 
+/* 주식(첫 줄)이 카드의 주인공이다 */
+.menu li:first-child {
+  font-size: clamp(1.6rem, 6.6vw, 2.05rem);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.menu li::before {
+  content: "";
+  flex: 0 0 auto;
+  /* 여러 줄로 넘어가도 첫 줄 높이에 점이 맞도록 위쪽 여백으로 내린다 */
+  margin-top: 0.55em;
+  width: 0.38em;
+  height: 0.38em;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+.menu li:first-child::before {
+  width: 0.28em;
+  height: 0.28em;
+  opacity: 1;
+}
+
 .headcount {
-  margin: 1.1rem 0 0;
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin: 1.35rem 0 0;
+  padding-top: 1.15rem;
+  border-top: 1px dashed var(--line);
+  font-size: 0.82rem;
   color: var(--muted);
 }
 
+.headcount svg { width: 1rem; height: 1rem; }
+
+/* ── 상태 메시지 (급식 없는 날 / 미등록 / 오류) ──────── */
+/* 식단이 없을 때도 같은 카드 위에 올려 화면 골격을 유지한다 */
+.card-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.15rem;
+  padding: 1.75rem 1.5rem;
+}
+
 .state-msg {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1.05rem;
-  color: var(--muted);
-  line-height: 1.6;
+  color: var(--text-2);
+  line-height: 1.65;
   word-break: keep-all;
 }
 
@@ -179,38 +304,46 @@ main {
 
 .action-btn {
   align-self: flex-start;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-strong);
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-strong);
   font: inherit;
   font-size: 0.9rem;
-  padding: 0.5rem 0.95rem;
-  border-radius: 0.55rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
   cursor: pointer;
 }
 
-.action-btn:hover { background: var(--accent); color: #fff; }
+.action-btn:hover { background: var(--accent-strong); color: var(--bg); }
 
 /* ── 하단 ────────────────────────────────────────────── */
 .footer {
-  padding: 0.9rem 1.25rem;
-  padding-bottom: max(0.9rem, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
+  padding: 0.5rem 1.5rem 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  text-align: center;
   color: var(--muted);
   font-size: 0.72rem;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .footer p { margin: 0; }
-.footer .src { opacity: 0.75; }
+.footer .src { font-size: 0.66rem; opacity: 0.8; }
 
 /* ── 넓은 화면 ───────────────────────────────────────── */
-/* 모바일 기준 크기는 손대지 않는다. PC에서만 헤더·날짜를 20% 키운다 —
+/* 모바일 기준 크기는 손대지 않는다. PC에서만 헤더·날짜를 키운다 —
    같은 rem 값이라도 넓은 화면에서는 작아 보이기 때문. */
 @media (min-width: 640px) {
   body { max-width: 34rem; margin: 0 auto; }
-  main { padding: 2rem 1.5rem; }
-  .topbar h1 { font-size: 1.6rem; }
+  main { padding: 1.5rem 1.5rem 2rem; }
+  .topbar { padding: 1.15rem 1.5rem; }
+  .topbar h1 { font-size: 1.45rem; }
+  .brand-ic { width: 1.8rem; height: 1.8rem; }
   .today-btn { font-size: 0.9rem; }
-  .date-label { font-size: 1.26rem; }
+  .date-label { font-size: 1.3rem; }
+  .card { padding: 2rem 1.9rem 1.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-btn:active, .nav-btn:active { transform: none; }
 }
