@@ -26,6 +26,8 @@ DATA = SITE / "data"
 
 DAY_RE = re.compile(r"^(\d{1,2})\.(\d{1,2})\(([월화수목금토일])\)$")
 TOTAL_RE = re.compile(r"^(\d{1,3}(?:,\d{3})*|\d+)\s*명$")
+HEADCOUNT_HINT_RE = re.compile(r"\d+\s*명")  # 휴일 사유에 인원이 섞여 있으면 잘못 읽은 것이다
+CLOSURE_MAX_LEN = 30  # '광복절 대체휴일' 처럼 짧은 한 마디만 사유로 인정한다
 PART_RE = re.compile(r"([가-힣]+(?:\s+[가-힣]+)?)\s*(\d{1,3}(?:,\d{3})*|\d+)\s*명")
 RANGE_RE = re.compile(
     r"【\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.\s*[∼~〜-]\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.\s*】"
@@ -74,7 +76,20 @@ def resolve_date(month, day, start, end):
 
 
 def parse_days(text, start, end):
-    """식단 표 본문을 날짜별 레코드로 쪼갠다."""
+    """식단 표 본문을 날짜별 레코드로 쪼갠다.
+
+    (급식일 레코드 목록, 급식 없는 날 목록) 을 반환한다.
+    공휴일 행은 급식인원 칸에 숫자 대신 사유 한 마디만 들어온다. 예)
+
+        8.17(월)
+        광복절 대체휴일
+        8.18(화)
+        268명
+        ...
+
+    사유 한 줄뿐인 경우만 휴일로 인정한다. 인원이나 메뉴가 함께 보이면
+    표 양식이 바뀐 것이므로 지금까지처럼 거부한다.
+    """
     body = text.split("주간식단", 1)[1]
     lines = [ln.strip() for ln in body.splitlines()]
 
@@ -92,6 +107,7 @@ def parse_days(text, start, end):
 
     bounds = marks + [tail]
     days = []
+    closures = []
 
     for k, begin in enumerate(marks):
         block = [ln for ln in lines[begin + 1 : bounds[k + 1]] if ln]
@@ -101,9 +117,18 @@ def parse_days(text, start, end):
         if not block:
             raise BadFormat(f"{when}: 급식일 뒤에 내용이 없다")
 
-        # 1) 총원
+        # 1) 총원 — 숫자가 아니면 '급식 없는 날' 인지 살핀다
         mt = TOTAL_RE.match(block[0])
         if not mt:
+            reason = block[0]
+            if (
+                len(block) == 1
+                and reason
+                and len(reason) <= CLOSURE_MAX_LEN
+                and not HEADCOUNT_HINT_RE.search(reason)
+            ):
+                closures.append({"date": when.isoformat(), "reason": reason})
+                continue
             raise BadFormat(f"{when}: 총 급식인원을 읽지 못했다 (읽은 값: {block[0]!r})")
         total = num(mt.group(1))
 
@@ -149,8 +174,12 @@ def parse_days(text, start, end):
             }
         )
 
+    if not days:
+        raise BadFormat("급식일이 하나도 없다 (한 주 전체가 휴일이면 사람이 봐야 한다)")
+
     days.sort(key=lambda d: d["date"])
-    return days
+    closures.sort(key=lambda c: c["date"])
+    return days, closures
 
 
 def iso_week(iso_date):
@@ -164,9 +193,9 @@ def import_pdf(path):
         text = find_menu_page(doc)
 
     start, end = parse_range(text)
-    days = parse_days(text, start, end)
+    days, closures = parse_days(text, start, end)
 
-    weeks = {iso_week(d["date"]) for d in days}
+    weeks = {iso_week(d["date"]) for d in days + closures}
     if len(weeks) != 1:
         raise BadFormat(f"한 파일에 여러 ISO 주차가 섞여 있다: {sorted(weeks)}")
     week = weeks.pop()
@@ -177,29 +206,34 @@ def import_pdf(path):
         "source": Path(path).name,
         "days": days,
     }
+    if closures:
+        doc_json["closures"] = closures
 
     out = DATA / f"{week}.json"
     new = json.dumps(doc_json, ensure_ascii=False, indent=2) + "\n"
     changed = not out.exists() or out.read_text(encoding="utf-8") != new
     if changed:
         out.write_text(new, encoding="utf-8")
-    return week, changed, len(days)
+    return week, changed, len(days), len(closures)
 
 
 def rebuild_index():
     """data/ 를 훑어 index.json 을 다시 만든다."""
-    weeks, all_days = [], []
+    weeks, all_days, all_closures = [], [], []
     for f in sorted(DATA.glob("????-W??.json")):
         doc = json.loads(f.read_text(encoding="utf-8"))
         weeks.append(doc["week"])
         all_days += [d["date"] for d in doc["days"]]
+        all_closures += doc.get("closures", [])
     all_days.sort()
+    all_closures.sort(key=lambda c: c["date"])
 
     index = {
         "weeks": sorted(weeks),
         "latest": sorted(weeks)[-1] if weeks else None,
         "coverage": {"from": all_days[0], "to": all_days[-1]} if all_days else None,
         "days": all_days,
+        "closures": all_closures,
         "updatedAt": date.today().isoformat(),
     }
     path = DATA / "index.json"
@@ -227,7 +261,7 @@ def main(argv):
     touched, failures = [], []
     for pdf in targets:
         try:
-            week, changed, n = import_pdf(pdf)
+            week, changed, n, n_off = import_pdf(pdf)
         except SkipPdf as e:
             print(f"  건너뜀  {pdf.name} — {e}")
             continue
@@ -235,7 +269,8 @@ def main(argv):
             failures.append((pdf.name, e))
             print(f"  실패    {pdf.name} — {e}")
             continue
-        print(f"  {'갱신' if changed else '동일'}    {pdf.name} → {week} ({n}일)")
+        note = f"{n}일" + (f", 휴일 {n_off}일" if n_off else "")
+        print(f"  {'갱신' if changed else '동일'}    {pdf.name} → {week} ({note})")
         if changed:
             touched.append(week)
 

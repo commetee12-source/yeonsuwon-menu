@@ -168,8 +168,30 @@
     return best;
   }
 
+  /** 급식이 없는 날의 사유("광복절 대체휴일" 등). 없으면 null. */
+  function closureReason(iso) {
+    var list = (index && index.closures) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].date === iso && list[i].reason) return list[i].reason;
+    }
+    return null;
+  }
+
   function renderNoMeal(iso) {
-    message('이 날은 급식이 없습니다.');
+    var reason = closureReason(iso);
+    if (reason) {
+      // 사유는 데이터에서 온 문자열이므로 innerHTML 로 끼우지 않는다
+      var p = document.createElement('p');
+      p.className = 'state-msg';
+      var strong = document.createElement('strong');
+      strong.textContent = reason;
+      p.appendChild(strong);
+      p.appendChild(document.createElement('br'));
+      p.appendChild(document.createTextNode('이 날은 급식이 없습니다.'));
+      stateCard().appendChild(p);
+    } else {
+      message('이 날은 급식이 없습니다.');
+    }
     var near = nearestMealDay(iso);
     if (near) {
       actionButton(formatShort(near) + ' 식단 보기', function () {
@@ -290,6 +312,7 @@
         index = doc;
         if (!Array.isArray(index.days)) index.days = [];
         if (!Array.isArray(index.weeks)) index.weeks = [];
+        if (!Array.isArray(index.closures)) index.closures = [];
         go(initial);
       })
       .catch(function (err) {

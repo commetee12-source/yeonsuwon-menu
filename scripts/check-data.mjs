@@ -50,6 +50,7 @@ const weekFiles = readdirSync(DATA_DIR)
   .sort();
 
 const allDates = [];
+const allClosures = [];
 const weeksFound = [];
 
 for (const file of weekFiles) {
@@ -116,6 +117,35 @@ for (const file of weekFiles) {
     }
   }
 
+  // 급식 없는 날(휴일) — 있을 때만 검사한다
+  if (doc.closures !== undefined) {
+    if (!Array.isArray(doc.closures)) {
+      fail(file, 'closures 가 배열이 아니다');
+    } else {
+      const seenOff = new Set();
+      for (const off of doc.closures) {
+        const at = `${file} [휴일 ${off?.date ?? '?'}]`;
+
+        if (!isRealDate(off?.date)) {
+          fail(at, 'date 가 YYYY-MM-DD 형식의 실재하는 날짜가 아니다');
+          continue;
+        }
+        if (typeof off.reason !== 'string' || off.reason.trim() === '') {
+          fail(at, 'reason 이 비어 있거나 문자열이 아니다');
+        }
+        if (seenOff.has(off.date)) fail(at, '같은 파일 안에서 휴일 날짜가 중복된다');
+        seenOff.add(off.date);
+        if (seen.has(off.date)) fail(at, '급식일과 휴일에 같은 날짜가 함께 있다');
+
+        const offWeek = isoWeekOf(off.date);
+        if (offWeek !== week) {
+          fail(at, `이 날짜의 ISO 주차는 ${offWeek} 이므로 ${week}.json 에 있으면 안 된다`);
+        }
+        allClosures.push({ date: off.date, reason: off.reason });
+      }
+    }
+  }
+
   // range 가 실제 날짜 범위와 맞는가
   const dates = doc.days.map((d) => d?.date).filter(isRealDate).sort();
   if (dates.length) {
@@ -151,6 +181,21 @@ if (index) {
     const extra = declaredDays.filter((d) => !sortedDates.includes(d));
     if (missing.length) fail('index.json', `days 에 빠진 날짜: ${missing.join(', ')}`);
     if (extra.length) fail('index.json', `days 에 실재하지 않는 날짜: ${extra.join(', ')}`);
+  }
+
+  // 키 순서에 흔들리지 않도록 "날짜=사유" 문자열로 견준다
+  const asPairs = (list) => list.map((c) => `${c?.date}=${c?.reason}`).sort();
+  const sortedClosures = asPairs(allClosures);
+  const declaredClosures = Array.isArray(index.closures) ? asPairs(index.closures) : null;
+
+  if (!declaredClosures) {
+    fail('index.json', 'closures 배열이 없다');
+  } else if (declaredClosures.join('\n') !== sortedClosures.join('\n')) {
+    fail(
+      'index.json',
+      `closures 가 주차 파일과 다르다 — index: [${declaredClosures.join(', ')}], ` +
+        `실제: [${sortedClosures.join(', ')}]`
+    );
   }
 
   if (sortedDates.length) {
@@ -191,5 +236,6 @@ if (problems.length) {
 
 console.log(
   `✓ 이상 없음 — 주차 ${weeksFound.length}개, 급식일 ${allDates.length}일` +
+    (allClosures.length ? `, 휴일 ${allClosures.length}일` : '') +
     (allDates.length ? ` (${[...allDates].sort()[0]} ~ ${[...allDates].sort().pop()})` : '')
 );
